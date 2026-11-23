@@ -1,1 +1,794 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניתוח היתכנות ותשואה: מערכת סולארית משולבת עם אגירה</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Rubik -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Rubik', 'sans-serif'],
+                    },
+                    colors: {
+                        solar: {
+                            amber: '#f59e0b',
+                            yellow: '#fbbf24',
+                            dark: '#0f172a',
+                            card: '#1e293b',
+                            emerald: '#10b981',
+                            blue: '#3b82f6',
+                            accent: '#f97316'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            background-color: #090d16;
+            color: #f1f5f9;
+        }
+        /* Custom range slider styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: #334155;
+            border-radius: 8px;
+            height: 8px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 22px;
+            width: 22px;
+            border-radius: 50%;
+            background: #f59e0b;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+            transition: transform 0.1s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+        .disabled-card {
+            opacity: 0.35;
+            pointer-events: none;
+            filter: grayscale(80%);
+            transition: all 0.3s ease;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .bg-solar-card, .bg-slate-900, .bg-slate-800 { background: white !important; border: 1px solid #ccc !important; color: black !important; }
+            .text-white, .text-slate-200, .text-slate-300 { color: black !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-16">
 
+    <!-- Header Section -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <div class="p-3 bg-gradient-to-tr from-amber-500 to-yellow-400 rounded-2xl shadow-lg shadow-amber-500/20 text-slate-950 font-black text-2xl">
+                    ☀️
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                        ניתוח כלכלי והנדסי: מערכת סולארית משולבת אגירה
+                    </h1>
+                    <p class="text-sm text-amber-400/90 font-medium">
+                        גג 250 מ"ר נטו | חלוקה ל-15 קו"ט ביתי + 20 קו"ט עסקי (תעריפי 2026)
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 no-print">
+                <button onclick="window.print()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold transition border border-slate-700">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2z"></path></svg>
+                    הדפס / שמור כ-PDF
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+
+        <!-- Regulatory Alert Banner -->
+        <section class="bg-gradient-to-r from-amber-950/60 via-amber-900/30 to-slate-900 border-r-4 border-amber-500 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+            <div class="flex items-start gap-4">
+                <div class="p-3 bg-amber-500/20 text-amber-400 rounded-xl font-bold text-2xl shrink-0">
+                    ⚠️
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-amber-300 mb-1">
+                        תנאי סף רגולטורי קריטי: הפרדת מונים (שני חוזים נפרדים מול חח"י)
+                    </h2>
+                    <p class="text-slate-300 text-sm leading-relaxed">
+                        על מנת לנצל את **מסלול פטור ממס (מסלול ירוק)** למערכת הביתית (עד 15 kW AC בתעריף מועדף של 48 אג') במקביל למערכת העסקית, **חובה להחזיק בשני מוני חשמל נפרדים (שני מקומות צרכנות)** באותו המבנה. 
+                        אם שתי המערכות יחוברו תחת מונה יחיד, חברת החשמל תתייחס לפרויקט כמתקן עסקי אחד מעל 15 קו"ט ותוריד את התעריף הממוצע לכל הקיבולת.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technical Parameters Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">פוטנציאל הגג</div>
+                <div class="text-2xl font-extrabold text-white mb-2">250 מ"ר נטו</div>
+                <p class="text-xs text-slate-400">מתוך 300 מ"ר (מנוכה שטח מוצל בסוף היום). צפיפות 5 מ"ר/kW DC $\rightarrow$ מתאים לכ-**50 kW DC** פאנלים סה"כ.</p>
+            </div>
+
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                <div class="text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-1">מערכת 1: ביתית (מסלול פטור)</div>
+                <div class="text-2xl font-extrabold text-emerald-300 mb-2">15 kW AC / 22 kW DC</div>
+                <p class="text-xs text-slate-400">תופסת כ-110 מ"ר. יחס מעמס DC/AC של 1.46 להגדלת התפוקה בשעות בוקר וערב.</p>
+            </div>
+
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                <div class="text-blue-400 text-xs font-semibold uppercase tracking-wider mb-1">מערכת 2: עסקית (על שם החברה)</div>
+                <div class="text-2xl font-extrabold text-blue-300 mb-2">20 kW AC / 28 kW DC</div>
+                <p class="text-xs text-slate-400">תופסת כ-140 מ"ר נותרים. מנצלת את מלוא יתרת השטח ומשתמשת במזדכות מע"מ.</p>
+            </div>
+        </section>
+
+        <!-- Section 1: Setup Costs Without Batteries Table -->
+        <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                    1. עלויות הקמת מערכות סולאריות (ללא סוללות)
+                </h2>
+                <p class="text-xs text-slate-400 mt-1">אומדן עלויות כולל ממירים היברידיים מוכנים לאגירה, קונסטרוקציה, חיווט, אישורי מהנדס וחח"י.</p>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-right border-collapse text-sm">
+                    <thead>
+                        <tr class="border-b border-slate-800 text-slate-400 text-xs font-semibold bg-slate-800/40">
+                            <th class="p-3.5 rounded-r-xl">רכיב במערכת</th>
+                            <th class="p-3.5">מערכת ביתית (15kW AC / 22kW DC)</th>
+                            <th class="p-3.5">מערכת עסקית (20kW AC / 28kW DC)</th>
+                            <th class="p-3.5 rounded-l-xl">הערות הנדסיות / תפעוליות</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/60 text-slate-200">
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="p-3.5 font-medium text-white">פאנלים סולאריים, קונסטרוקציה וחיווט</td>
+                            <td class="p-3.5 font-semibold">~42,000 ₪</td>
+                            <td class="p-3.5 font-semibold">~52,000 ₪</td>
+                            <td class="p-3.5 text-xs text-slate-400">פאנלים High-Efficiency + קונסטרוקציית אלומיניום מוגנת רוח</td>
+                        </tr>
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="p-3.5 font-medium text-white">ממירים היברידיים (Hybrid Inverters)</td>
+                            <td class="p-3.5 font-semibold">~16,000 ₪</td>
+                            <td class="p-3.5 font-semibold">~21,000 ₪</td>
+                            <td class="p-3.5 text-xs text-slate-400">כולל יציאת גיבוי חיונית להפסקות חשמל ובקרת אגירה</td>
+                        </tr>
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="p-3.5 font-medium text-white">התקנה, מהנדס חשמל, בדיקות ואישור חח"י</td>
+                            <td class="p-3.5 font-semibold">~17,000 ₪</td>
+                            <td class="p-3.5 font-semibold">~21,000 ₪</td>
+                            <td class="p-3.5 text-xs text-slate-400">תכנון הנדסי, תוכניות תפעול, רישוי וחיבור סופי למונים</td>
+                        </tr>
+                        <tr class="bg-slate-800/60 font-bold text-amber-300">
+                            <td class="p-3.5 text-white">סה"כ עלות הקמה (ללא מע"מ)</td>
+                            <td class="p-3.5">~75,000 ₪</td>
+                            <td class="p-3.5">~94,000 ₪</td>
+                            <td class="p-3.5 text-xs text-slate-400">עלות נטו לפעילות</td>
+                        </tr>
+                        <tr class="bg-amber-950/20 font-extrabold text-amber-400">
+                            <td class="p-3.5 text-white">סה"כ לתשלום בפועל (כולל מע"מ 18%)</td>
+                            <td class="p-3.5 text-lg">~88,500 ₪ <span class="text-xs font-normal text-slate-400 block">(אין קיזוז מע"מ בבית)</span></td>
+                            <td class="p-3.5 text-lg">94,000 ₪ <span class="text-xs font-normal text-slate-400 block">(החברה מזדכה על 16,920 ₪ מע"מ)</span></td>
+                            <td class="p-3.5 text-xs text-slate-300">
+                                💡 *הערה:* אם נדרשת הגדלת חיבור חשמל בלוח הביתי מ-3x25A ל-3x40A, יש להוסיף כ-3,000–4,500 ₪.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Sections 2 & 3: Storage Recommendation & Logic -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Battery Recommendations Card -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2 mb-4">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                        2. המלצה למערכות אגירה (סוללות) ועלות כוללת
+                    </h2>
+                    <p class="text-xs text-slate-400 mb-6">עלות אגירה ממוצעת: כ-1,450–1,600 ₪ לכל 1 kWh קיבולת מותקנת (LFP סוללות בטיחותיות).</p>
+
+                    <div class="space-y-4">
+                        <!-- Home Battery -->
+                        <div class="p-4 rounded-xl bg-slate-800/80 border border-slate-700">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-bold text-emerald-400 text-base">אגירה למערכת הביתית</span>
+                                <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold">15 kWh קיבולת</span>
+                            </div>
+                            <div class="text-xs text-slate-300 space-y-1">
+                                <div>תוספת עלות אגירה: **~23,000 ₪** (כולל מע"מ)</div>
+                                <div class="text-emerald-300 font-bold text-sm pt-1">עלות פרויקט ביתי כולל אגירה: ~111,500 ₪ (כולל מע"מ)</div>
+                            </div>
+                        </div>
+
+                        <!-- Biz Battery -->
+                        <div class="p-4 rounded-xl bg-slate-800/80 border border-slate-700">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-bold text-blue-400 text-base">אגירה למערכת העסקית</span>
+                                <span class="text-xs px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 font-bold">30 kWh קיבולת</span>
+                            </div>
+                            <div class="text-xs text-slate-300 space-y-1">
+                                <div>תוספת עלות אגירה: **~42,000 ₪** (ללא מע"מ - מוכר לחברה)</div>
+                                <div class="text-blue-300 font-bold text-sm pt-1">עלות פרויקט עסקי כולל אגירה: ~136,000 ₪ (ללא מע"מ)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-slate-800 text-xs text-emerald-400 font-medium flex items-center gap-2">
+                    <span>🔋</span> כפילויות אגירה אלו מספקות גם גיבוי מלא (UPS) לבית ולעסק בעת הפסקות חשמל!
+                </div>
+            </div>
+
+            <!-- Battery Rationale Card -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2 mb-4">
+                    <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                    3. ההיגיון ההנדסי מאחורי גודל הסוללות
+                </h2>
+
+                <div class="space-y-4 text-sm text-slate-300">
+                    <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
+                        <h3 class="font-bold text-white text-base mb-1 flex items-center gap-2">
+                            <span>☀️</span> 1. לכידת עודפי קטימת שיא (Clipping Loss)
+                        </h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            המערכת הביתית כוללת **22kW DC** פאנלים על ממיר של **15kW AC**. בשעות השיא בצהריים מיוצרים 22 קו"ט, אך הממיר יכול להזרים לרשת רק 15 קו"ט. 
+                            ללא סוללה – כ-15 קוט"ש ליום הולכים לאיבוד! **הסוללה אוגרת את העודפים החינמיים הללו בדיוק בצהריים.**
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-800">
+                        <h3 class="font-bold text-white text-base mb-1 flex items-center gap-2">
+                            <span>📈</span> 2. עמידה בתנאי 800 שעות פריקה (פרמיית תעו"ז)
+                        </h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            כדי לקבל את תוספת התעריף של שעות הפסגה (17:00–23:00), הרגולציה דורשת **מינימום 800 שעות פריקה שנתיות** בשעות הפסגה (כ-2.2 שעות פריקה ביום).
+                            סוללות של 15kWh ו-30kWh מבטיחות עמידה ביעד זה לאורך כל עונות השנה, גם בקיץ וגם בחורף.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Section 4: Revenue & Tariffs -->
+        <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+                    4. חישוב הכנסות חודשיות לפי תעריפי 2026
+                </h2>
+                <div class="flex flex-wrap gap-3 mt-3">
+                    <span class="px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
+                        תעריף ביתי רגיל: 0.48 ₪ / kWh
+                    </span>
+                    <span class="px-3 py-1 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs font-semibold">
+                        תעריף עסקי רגיל: 0.3731 ₪ / kWh
+                    </span>
+                    <span class="px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
+                        תעריף פריקה בשעות שיא (תעו"ז): ~1.05 ₪ / kWh (ממוצע שנתי)
+                    </span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Home Revenue -->
+                <div class="p-5 rounded-2xl bg-slate-800/50 border border-slate-700/70">
+                    <h3 class="text-lg font-bold text-emerald-400 mb-3">המערכת הביתית (22kW DC / 15kW AC)</h3>
+                    <p class="text-xs text-slate-400 mb-4">ייצור ממוצע: ~2,900 קוט"ש בחודש (כ-34,800 קוט"ש בשנה)</p>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                            <span class="text-xs font-medium text-slate-300">1. ללא סוללה (הכל נמכר ב-48 אג'):</span>
+                            <span class="font-extrabold text-white text-base">~1,390 ₪ / חודש</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/40">
+                            <div>
+                                <span class="text-xs font-bold text-emerald-300 block">2. עם סוללת 15 kWh (מכירת תעו"ז):</span>
+                                <span class="text-[11px] text-slate-400">1,224 ₪ ביום + 420 ₪ פריקת שיא</span>
+                            </div>
+                            <span class="font-extrabold text-emerald-300 text-lg">~1,645 ₪ / חודש</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Biz Revenue -->
+                <div class="p-5 rounded-2xl bg-slate-800/50 border border-slate-700/70">
+                    <h3 class="text-lg font-bold text-blue-400 mb-3">המערכת העסקית (28kW DC / 20kW AC)</h3>
+                    <p class="text-xs text-slate-400 mb-4">ייצור ממוצע: ~3,700 קוט"ש בחודש (כ-44,400 קוט"ש בשנה)</p>
+
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                            <span class="text-xs font-medium text-slate-300">1. ללא סוללה (הכל נמכר ב-37.31 אג'):</span>
+                            <span class="font-extrabold text-white text-base">~1,380 ₪ / חודש</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 rounded-xl bg-blue-950/30 border border-blue-500/40">
+                            <div>
+                                <span class="text-xs font-bold text-blue-300 block">2. עם סוללת 30 kWh (מכירת תעו"ז):</span>
+                                <span class="text-[11px] text-slate-400">1,138 ₪ ביום + 840 ₪ פריקת שיא</span>
+                            </div>
+                            <span class="font-extrabold text-blue-300 text-lg">~1,980 ₪ / חודש</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: Enhanced Interactive ROI & Cash-Flow Simulator -->
+        <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-8">
+            
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-2xl font-black text-white flex items-center gap-3">
+                        <span>📊</span> סימולטור רווח נטו ותזרים מצטבר (אינטראקטיבי מורחב)
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">
+                        התאם את המערכות, בחר נפח סוללות (ניתן לבחור 0 קוט"ש לביטול אגירה) וראה מיידית את השינוי בהשקעה הראשונית, בהכנסות ובגרף התשואה.
+                    </p>
+                </div>
+                <button onclick="resetSliders()" class="self-start md:self-auto text-xs px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold border border-slate-700 transition flex items-center gap-1.5">
+                    🔄 איפוס ברירות מחדל
+                </button>
+            </div>
+
+            <!-- System Mode Selector Toggle Buttons -->
+            <div class="bg-slate-950 p-2 rounded-2xl border border-slate-800 max-w-3xl mx-auto">
+                <label class="block text-xs font-semibold text-slate-400 mb-2 text-center">בחר היקף המערכת לבדיקה:</label>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <button id="mode-both" onclick="setSystemMode('both')" class="py-2.5 px-4 rounded-xl font-bold text-xs transition border bg-amber-500 text-slate-950 border-amber-400 shadow-lg shadow-amber-500/20">
+                        ✨ שתי המערכות יחדיו (ביתית + עסקית)
+                    </button>
+                    <button id="mode-res" onclick="setSystemMode('res')" class="py-2.5 px-4 rounded-xl font-semibold text-xs transition border bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700">
+                        🏡 מערכת ביתית בלבד
+                    </button>
+                    <button id="mode-biz" onclick="setSystemMode('biz')" class="py-2.5 px-4 rounded-xl font-semibold text-xs transition border bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700">
+                        🏢 מערכת עסקית בלבד
+                    </button>
+                </div>
+            </div>
+
+            <!-- KPI Cards Summary Box -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700">
+                    <span class="text-xs text-slate-400 block mb-1">סה"כ השקעה ראשונית (Capex)</span>
+                    <span id="kpi-total-capex" class="text-xl font-extrabold text-white">247,500 ₪</span>
+                    <span id="kpi-capex-split" class="text-[11px] text-slate-400 block mt-1">סולארי: 182,500 ₪ | אגירה: 65,000 ₪</span>
+                </div>
+                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700">
+                    <span class="text-xs text-slate-400 block mb-1">הכנסה חודשית משולבת</span>
+                    <span id="kpi-monthly-rev" class="text-xl font-extrabold text-amber-400">3,625 ₪</span>
+                    <span id="kpi-annual-rev" class="text-[11px] text-slate-400 block mt-1">שנתי: 43,500 ₪</span>
+                </div>
+                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700">
+                    <span class="text-xs text-slate-400 block mb-1">זמן החזר השקעה משוער</span>
+                    <span id="kpi-breakeven" class="text-xl font-bold text-emerald-400">5.7 שנים</span>
+                    <span id="kpi-breakeven-detail" class="text-[11px] text-slate-400 block mt-1">ביתית: 5.6 שנ' | עסקית: 5.7 שנ'</span>
+                </div>
+                <div class="bg-gradient-to-br from-emerald-950/40 to-slate-800 p-4 rounded-xl border border-emerald-500/30">
+                    <span class="text-xs text-emerald-300 block mb-1">רווח נטו מצטבר בתום התקופה</span>
+                    <span id="kpi-total-net" class="text-xl font-black text-emerald-400">779,531 ₪</span>
+                    <span id="kpi-roi-percent" class="text-[11px] text-emerald-300 block mt-1">תשואה כוללת: +315%</span>
+                </div>
+            </div>
+
+            <!-- Sliders Container Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- Residential System Sliders Card -->
+                <div id="res-card" class="bg-slate-800/40 p-5 rounded-2xl border border-slate-800 space-y-5 transition-all">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <span class="font-bold text-emerald-400 text-sm flex items-center gap-2">
+                            <span>🏡</span> פרמטרים: מערכת ביתית (15kW AC)
+                        </span>
+                        <span id="res-capex-badge" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300">
+                            עלות כוללת: 111,500 ₪
+                        </span>
+                    </div>
+
+                    <!-- Res Base Cost Slider -->
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-2">
+                            <label for="res_base_capex_input" class="text-slate-300">עלות סולארית בסיסית (ללא סוללה)</label>
+                            <span id="res_base_capex_val" class="text-white font-bold">88,500 ₪</span>
+                        </div>
+                        <input type="range" id="res_base_capex_input" min="60000" max="110000" step="1000" value="88500" class="w-full">
+                    </div>
+
+                    <!-- Res Battery Capacity Slider -->
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-2">
+                            <label for="res_battery_kwh_input" class="text-slate-300">
+                                נפח סוללת אגירה ביתית
+                                <span class="text-slate-400 font-normal">(0 = ללא סוללה)</span>
+                            </label>
+                            <span id="res_battery_kwh_val" class="text-emerald-300 font-bold">15 kWh (23,000 ₪)</span>
+                        </div>
+                        <input type="range" id="res_battery_kwh_input" min="0" max="30" step="1" value="15" class="w-full">
+                    </div>
+                </div>
+
+                <!-- Commercial System Sliders Card -->
+                <div id="biz-card" class="bg-slate-800/40 p-5 rounded-2xl border border-slate-800 space-y-5 transition-all">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <span class="font-bold text-blue-400 text-sm flex items-center gap-2">
+                            <span>🏢</span> פרמטרים: מערכת עסקית (20kW AC)
+                        </span>
+                        <span id="biz-capex-badge" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300">
+                            עלות כוללת: 136,000 ₪
+                        </span>
+                    </div>
+
+                    <!-- Biz Base Cost Slider -->
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-2">
+                            <label for="biz_base_capex_input" class="text-slate-300">עלות סולארית בסיסית (ללא סוללה)</label>
+                            <span id="biz_base_capex_val" class="text-white font-bold">94,000 ₪</span>
+                        </div>
+                        <input type="range" id="biz_base_capex_input" min="70000" max="130000" step="1000" value="94000" class="w-full">
+                    </div>
+
+                    <!-- Biz Battery Capacity Slider -->
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-2">
+                            <label for="biz_battery_kwh_input" class="text-slate-300">
+                                נפח סוללת אגירה עסקית
+                                <span class="text-slate-400 font-normal">(0 = ללא סוללה)</span>
+                            </label>
+                            <span id="biz_battery_kwh_val" class="text-blue-300 font-bold">30 kWh (42,000 ₪)</span>
+                        </div>
+                        <input type="range" id="biz_battery_kwh_input" min="0" max="50" step="1" value="30" class="w-full">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Timeline Slider -->
+            <div class="bg-slate-800/30 p-4 rounded-xl border border-slate-800">
+                <div class="flex justify-between text-xs font-bold mb-2">
+                    <label for="years_input" class="text-slate-300">משך תקופת סימולציה (חוזה חברת החשמל)</label>
+                    <span id="years_val" class="text-amber-400 font-extrabold text-sm">25 שנים</span>
+                </div>
+                <input type="range" id="years_input" min="5" max="26" step="1" value="25" class="w-full">
+            </div>
+
+            <!-- Chart Container -->
+            <div class="relative w-full bg-slate-950 p-4 sm:p-6 rounded-2xl border border-slate-800 shadow-inner">
+                <div class="flex justify-between items-center mb-4 px-2">
+                    <span class="text-xs font-semibold text-slate-300">תזרים מזומנים מצטבר נטו (₪) - החזר השקעה</span>
+                    <span class="text-[11px] text-slate-500">תעריפי 2026 כולל פחת ייצור 0.5% לשנה</span>
+                </div>
+                <div class="relative w-full h-[380px]">
+                    <canvas id="cashflowChart"></canvas>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Interactive JavaScript Simulator Engine -->
+    <script>
+        // State Management
+        let systemMode = 'both'; // 'both', 'res', 'biz'
+        let chartInstance = null;
+
+        // DOM Elements
+        const resBaseCapexInput = document.getElementById('res_base_capex_input');
+        const resBatteryKwhInput = document.getElementById('res_battery_kwh_input');
+        const bizBaseCapexInput = document.getElementById('biz_base_capex_input');
+        const bizBatteryKwhInput = document.getElementById('biz_battery_kwh_input');
+        const yearsInput = document.getElementById('years_input');
+
+        const resBaseCapexVal = document.getElementById('res_base_capex_val');
+        const resBatteryKwhVal = document.getElementById('res_battery_kwh_val');
+        const bizBaseCapexVal = document.getElementById('biz_base_capex_val');
+        const bizBatteryKwhVal = document.getElementById('biz_battery_kwh_val');
+        const yearsVal = document.getElementById('years_val');
+
+        const resCapexBadge = document.getElementById('res-capex-badge');
+        const bizCapexBadge = document.getElementById('biz-capex-badge');
+
+        const kpiTotalCapex = document.getElementById('kpi-total-capex');
+        const kpiCapexSplit = document.getElementById('kpi-capex-split');
+        const kpiMonthlyRev = document.getElementById('kpi-monthly-rev');
+        const kpiAnnualRev = document.getElementById('kpi-annual-rev');
+        const kpiBreakeven = document.getElementById('kpi-breakeven');
+        const kpiBreakevenDetail = document.getElementById('kpi-breakeven-detail');
+        const kpiTotalNet = document.getElementById('kpi-total-net');
+        const kpiRoiPercent = document.getElementById('kpi-roi-percent');
+
+        const resCard = document.getElementById('res-card');
+        const bizCard = document.getElementById('biz-card');
+
+        function formatCurrency(val) {
+            return Math.round(val).toLocaleString('he-IL') + ' ₪';
+        }
+
+        function setSystemMode(mode) {
+            systemMode = mode;
+            
+            // Toggle button styles
+            const btnBoth = document.getElementById('mode-both');
+            const btnRes = document.getElementById('mode-res');
+            const btnBiz = document.getElementById('mode-biz');
+
+            [btnBoth, btnRes, btnBiz].forEach(b => {
+                b.className = "py-2.5 px-4 rounded-xl font-semibold text-xs transition border bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700";
+            });
+
+            if (mode === 'both') {
+                btnBoth.className = "py-2.5 px-4 rounded-xl font-bold text-xs transition border bg-amber-500 text-slate-950 border-amber-400 shadow-lg shadow-amber-500/20";
+                resCard.classList.remove('disabled-card');
+                bizCard.classList.remove('disabled-card');
+            } else if (mode === 'res') {
+                btnRes.className = "py-2.5 px-4 rounded-xl font-bold text-xs transition border bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/20";
+                resCard.classList.remove('disabled-card');
+                bizCard.classList.add('disabled-card');
+            } else if (mode === 'biz') {
+                btnBiz.className = "py-2.5 px-4 rounded-xl font-bold text-xs transition border bg-blue-500 text-white border-blue-400 shadow-lg shadow-blue-500/20";
+                resCard.classList.add('disabled-card');
+                bizCard.classList.remove('disabled-card');
+            }
+
+            updateSimulation();
+        }
+
+        function calculateNetProfit(monthly, capex, t) {
+            if (t <= 0) return -capex;
+            // Cumulative revenue with 0.5% annual degradation factor (0.995)
+            const cumRevenue = monthly * 12 * ((1 - Math.pow(0.995, t)) / 0.005);
+            return cumRevenue - capex;
+        }
+
+        function updateSimulation() {
+            // Inputs
+            const resBaseCapex = parseFloat(resBaseCapexInput.value);
+            const resBatteryKwh = parseFloat(resBatteryKwhInput.value);
+            const bizBaseCapex = parseFloat(bizBaseCapexInput.value);
+            const bizBatteryKwh = parseFloat(bizBatteryKwhInput.value);
+            const maxYears = parseInt(yearsInput.value);
+
+            // Cost Calcs
+            // 15 kWh battery benchmark = 23,000 NIS inc VAT (1,533 NIS/kWh)
+            const resBatteryCost = resBatteryKwh * (23000 / 15);
+            const resTotalCapex = resBaseCapex + resBatteryCost;
+
+            // 30 kWh battery benchmark = 42,000 NIS ex VAT (1,400 NIS/kWh)
+            const bizBatteryCost = bizBatteryKwh * (42000 / 30);
+            const bizTotalCapex = bizBaseCapex + bizBatteryCost;
+
+            // Revenue Calcs
+            // Res: 1,390 base without battery + up to 255 extra with 15 kWh battery
+            const resMonthlyRev = 1390 + (resBatteryKwh * (255 / 15));
+            // Biz: 1,380 base without battery + up to 600 extra with 30 kWh battery
+            const bizMonthlyRev = 1380 + (bizBatteryKwh * (600 / 30));
+
+            // Update Labels
+            resBaseCapexVal.innerText = formatCurrency(resBaseCapex);
+            resBatteryKwhVal.innerText = `${resBatteryKwh} kWh (${formatCurrency(resBatteryCost)})`;
+            resCapexBadge.innerText = `עלות ביתית: ${formatCurrency(resTotalCapex)}`;
+
+            bizBaseCapexVal.innerText = formatCurrency(bizBaseCapex);
+            bizBatteryKwhVal.innerText = `${bizBatteryKwh} kWh (${formatCurrency(bizBatteryCost)})`;
+            bizCapexBadge.innerText = `עלות עסקית: ${formatCurrency(bizTotalCapex)}`;
+
+            yearsVal.innerText = `${maxYears} שנים`;
+
+            // Active Capex & Revenue depending on Mode
+            let activeCapex = 0;
+            let activeMonthlyRev = 0;
+            let activeSolarCapex = 0;
+            let activeBatteryCapex = 0;
+
+            if (systemMode === 'both' || systemMode === 'res') {
+                activeCapex += resTotalCapex;
+                activeMonthlyRev += resMonthlyRev;
+                activeSolarCapex += resBaseCapex;
+                activeBatteryCapex += resBatteryCost;
+            }
+            if (systemMode === 'both' || systemMode === 'biz') {
+                activeCapex += bizTotalCapex;
+                activeMonthlyRev += bizMonthlyRev;
+                activeSolarCapex += bizBaseCapex;
+                activeBatteryCapex += bizBatteryCost;
+            }
+
+            // KPIs
+            kpiTotalCapex.innerText = formatCurrency(activeCapex);
+            kpiCapexSplit.innerText = `סולארי: ${formatCurrency(activeSolarCapex)} | אגירה: ${formatCurrency(activeBatteryCapex)}`;
+
+            kpiMonthlyRev.innerText = formatCurrency(activeMonthlyRev);
+            kpiAnnualRev.innerText = `שנתי: ${formatCurrency(activeMonthlyRev * 12)}`;
+
+            // Breakeven years
+            const resBreakeven = resMonthlyRev > 0 ? (resTotalCapex / (resMonthlyRev * 12)).toFixed(1) : '-';
+            const bizBreakeven = bizMonthlyRev > 0 ? (bizTotalCapex / (bizMonthlyRev * 12)).toFixed(1) : '-';
+            const combinedBreakeven = activeMonthlyRev > 0 ? (activeCapex / (activeMonthlyRev * 12)).toFixed(1) : '-';
+
+            if (systemMode === 'both') {
+                kpiBreakeven.innerText = `${combinedBreakeven} שנים`;
+                kpiBreakevenDetail.innerText = `ביתית: ${resBreakeven} שנ' | עסקית: ${bizBreakeven} שנ'`;
+            } else if (systemMode === 'res') {
+                kpiBreakeven.innerText = `${resBreakeven} שנים`;
+                kpiBreakevenDetail.innerText = `החזר מלא מבוסס פטור ממס`;
+            } else {
+                kpiBreakeven.innerText = `${bizBreakeven} שנים`;
+                kpiBreakevenDetail.innerText = `החזר מלא מנוכה מע"מ`;
+            }
+
+            // Final Net Profit
+            const finalNet = calculateNetProfit(activeMonthlyRev, activeCapex, maxYears);
+            kpiTotalNet.innerText = formatCurrency(finalNet);
+            const roiPercent = activeCapex > 0 ? Math.round((finalNet / activeCapex) * 100) : 0;
+            kpiRoiPercent.innerText = `תשואה מצטברת: ${roiPercent >= 0 ? '+' : ''}${roiPercent}%`;
+
+            // Prepare Data for Chart
+            renderChart(maxYears, resTotalCapex, resMonthlyRev, bizTotalCapex, bizMonthlyRev);
+        }
+
+        function renderChart(maxYears, resTotalCapex, resMonthlyRev, bizTotalCapex, bizMonthlyRev) {
+            const labels = [];
+            const resData = [];
+            const bizData = [];
+            const combinedData = [];
+
+            for (let y = 0; y <= maxYears; y++) {
+                labels.push(`שנה ${y}`);
+                const rNet = calculateNetProfit(resMonthlyRev, resTotalCapex, y);
+                const bNet = calculateNetProfit(bizMonthlyRev, bizTotalCapex, y);
+                
+                resData.push(rNet);
+                bizData.push(bNet);
+                combinedData.push(rNet + bNet);
+            }
+
+            const datasets = [];
+
+            if (systemMode === 'both' || systemMode === 'res') {
+                datasets.push({
+                    label: 'מערכת ביתית (נטו)',
+                    data: resData,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    tension: 0.2,
+                    fill: systemMode === 'res'
+                });
+            }
+
+            if (systemMode === 'both' || systemMode === 'biz') {
+                datasets.push({
+                    label: 'מערכת עסקית (נטו)',
+                    data: bizData,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    tension: 0.2,
+                    fill: systemMode === 'biz'
+                });
+            }
+
+            if (systemMode === 'both') {
+                datasets.push({
+                    label: 'סה"כ משולב (ביתית + עסקית)',
+                    data: combinedData,
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                    borderWidth: 3.5,
+                    pointRadius: 3,
+                    tension: 0.2,
+                    fill: true
+                });
+            }
+
+            const ctx = document.getElementById('cashflowChart').getContext('2d');
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#cbd5e1',
+                                font: { family: 'Rubik', size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            rtl: true,
+                            backgroundColor: '#0f172a',
+                            titleColor: '#fbbf24',
+                            bodyColor: '#f8fafc',
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatCurrency(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(51, 65, 85, 0.4)' },
+                            ticks: { color: '#94a3b8', font: { family: 'Rubik', size: 11 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(51, 65, 85, 0.4)' },
+                            ticks: { 
+                                color: '#94a3b8',
+                                font: { family: 'Rubik', size: 11 },
+                                callback: function(value) {
+                                    return (value / 1000) + 'k ₪';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function resetSliders() {
+            resBaseCapexInput.value = 88500;
+            resBatteryKwhInput.value = 15;
+            bizBaseCapexInput.value = 94000;
+            bizBatteryKwhInput.value = 30;
+            yearsInput.value = 25;
+            setSystemMode('both');
+        }
+
+        // Event Listeners
+        [resBaseCapexInput, resBatteryKwhInput, bizBaseCapexInput, bizBatteryKwhInput, yearsInput].forEach(input => {
+            input.addEventListener('input', updateSimulation);
+        });
+
+        // Initialize on load
+        window.onload = function() {
+            updateSimulation();
+        };
+    </script>
+</body>
+</html>
